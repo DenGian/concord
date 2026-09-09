@@ -1,41 +1,54 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
+// Prisma schema for the Discord clone.
+//
+// The database is PostgreSQL (see docker-compose.yml for a ready-to-use local
+// instance). The generated client is written to `lib/generated/prisma` and is
+// instantiated in `lib/db.ts` through the `@prisma/adapter-pg` driver adapter,
+// as required by Prisma 7.
+//
+// Connection configuration for the CLI lives in `prisma.config.ts`.
 
 generator client {
-  provider = "prisma-client-js"
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
 }
 
 datasource db {
-  provider = "mysql"
-  url = env("DATABASE_URL")
-  relationMode = "prisma"
+  provider = "postgresql"
 }
 
+/// A Profile mirrors a Clerk user inside our own database. It is created
+/// lazily on first sign-in (see `lib/initial-profile.ts`) and is the anchor
+/// for everything the user owns or participates in.
 model Profile {
-  id String @id @default(uuid())
-  userId String @unique
-  name String
+  id       String @id @default(uuid())
+  /// Clerk user id (`user_...`). Unique link between Clerk and our database.
+  userId   String @unique
+  name     String
   imageUrl String @db.Text
-  email String @db.Text
+  email    String @db.Text
 
-  servers Server[]
-  members Member[]
+  servers  Server[]
+  members  Member[]
   channels Channel[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
+/// A Server (a.k.a. "guild" in Discord terms) groups channels and members.
 model Server {
-  id String @id @default(uuid())
-  name String
-  imageUrl String @db.Text
-  inviteCode String @db.Text
+  id         String @id @default(uuid())
+  name       String
+  imageUrl   String @db.Text
+  /// Single-use-style invite token embedded in invite links
+  /// (`/invite/[inviteCode]`). Regenerated on demand by admins.
+  inviteCode String @unique
 
+  /// The profile that created (and administers) the server.
   profileId String
-  profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
 
-  members Member[]
+  members  Member[]
   channels Channel[]
 
   createdAt DateTime @default(now())
@@ -50,19 +63,29 @@ enum MemberRole {
   GUEST
 }
 
-model Member{
-  id String @id @default(uuid())
+/// A Member ties a Profile to a Server with a role. All chat activity
+/// (messages, conversations) hangs off the membership rather than the profile
+/// so that it is scoped per server.
+model Member {
+  id   String     @id @default(uuid())
   role MemberRole @default(GUEST)
 
   profileId String
-  profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
 
   serverId String
-  server Server @relation(fields: [serverId], references: [id], onDelete: Cascade)
+  server   Server @relation(fields: [serverId], references: [id], onDelete: Cascade)
+
+  messages       Message[]
+  directMessages DirectMessage[]
+
+  conversationsInitiated Conversation[] @relation("MemberOne")
+  conversationsReceived  Conversation[] @relation("MemberTwo")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@unique([profileId, serverId])
   @@index([profileId])
   @@index([serverId])
 }
@@ -73,20 +96,93 @@ enum ChannelType {
   VIDEO
 }
 
+/// A Channel belongs to a server. TEXT channels hold messages; AUDIO and
+/// VIDEO channels are LiveKit rooms.
 model Channel {
-  id String @id @default(uuid())
+  id   String      @id @default(uuid())
   name String
   type ChannelType @default(TEXT)
 
+  /// The profile that created the channel.
   profileId String
-  profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
 
   serverId String
-  server Server @relation(fields: [serverId], references: [id], onDelete: Cascade)
+  server   Server @relation(fields: [serverId], references: [id], onDelete: Cascade)
+
+  messages Message[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([profileId])
   @@index([serverId])
+}
+
+/// A chat message inside a TEXT channel.
+model Message {
+  id      String @id @default(uuid())
+  content String @db.Text
+
+  /// Optional attachment uploaded through UploadThing.
+  fileUrl  String? @db.Text
+  /// MIME type of the attachment (e.g. `image/png`, `application/pdf`).
+  /// Stored explicitly because UploadThing URLs do not expose an extension.
+  fileType String?
+
+  memberId String
+  member   Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  channelId String
+  channel   Channel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+
+  /// Soft-delete flag: deleted messages stay in place but show a tombstone.
+  deleted Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([channelId, createdAt])
+  @@index([memberId])
+}
+
+/// A 1:1 conversation between two members of the same server. The pair is
+/// stored in a canonical (memberOne, memberTwo) order by
+/// `lib/conversation.ts`, with the unique constraint preventing duplicates.
+model Conversation {
+  id String @id @default(uuid())
+
+  memberOneId String
+  memberOne   Member @relation("MemberOne", fields: [memberOneId], references: [id], onDelete: Cascade)
+
+  memberTwoId String
+  memberTwo   Member @relation("MemberTwo", fields: [memberTwoId], references: [id], onDelete: Cascade)
+
+  directMessages DirectMessage[]
+
+  @@unique([memberOneId, memberTwoId])
+  @@index([memberTwoId])
+}
+
+/// A chat message inside a 1:1 conversation.
+model DirectMessage {
+  id      String @id @default(uuid())
+  content String @db.Text
+
+  fileUrl  String? @db.Text
+  fileType String?
+
+  memberId String
+  member   Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  deleted Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([conversationId, createdAt])
+  @@index([memberId])
 }
