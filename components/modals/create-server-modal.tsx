@@ -1,19 +1,19 @@
 "use client";
 
-import * as z from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import axios from "axios";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useRouter } from "next/navigation";
 
+import { serverSchema, type ServerInput } from "@/lib/validations";
+import { useModal } from "@/hooks/use-modal-store";
 import {
 	Dialog,
 	DialogContent,
 	DialogDescription,
-	DialogHeader,
 	DialogFooter,
+	DialogHeader,
 	DialogTitle,
 } from "@/components/ui/dialog";
-
 import {
 	Form,
 	FormControl,
@@ -22,33 +22,19 @@ import {
 	FormLabel,
 	FormMessage,
 } from "@/components/ui/form";
-
 import { Input } from "@/components/ui/input";
-
 import { Button } from "@/components/ui/button";
-
 import { FileUpload } from "@/components/file-upload";
 
-import { useRouter } from "next/navigation";
-import { UseModal } from "@/hooks/use-modal-store";
-
-const formSchema = z.object({
-	name: z.string().min(1, {
-		message: "Server name is required.",
-	}),
-	imageUrl: z.string().min(1, {
-		message: "Server image is required.",
-	}),
-});
-
+/** Modal to create an additional server (opened from the "+" sidebar button). */
 export const CreateServerModal = () => {
-	const { isOpen, onClose, type } = UseModal();
+	const { isOpen, onClose, type } = useModal();
 	const router = useRouter();
 
 	const isModalOpen = isOpen && type === "createServer";
 
-	const form = useForm({
-		resolver: zodResolver(formSchema),
+	const form = useForm<ServerInput>({
+		resolver: zodResolver(serverSchema),
 		defaultValues: {
 			name: "",
 			imageUrl: "",
@@ -57,15 +43,22 @@ export const CreateServerModal = () => {
 
 	const isLoading = form.formState.isSubmitting;
 
-	const onSubmit = async (values: z.infer<typeof formSchema>) => {
+	const onSubmit = async (values: ServerInput) => {
 		try {
-			await axios.post("/api/servers", values);
+			const res = await fetch("/api/servers", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify(values),
+			});
+			if (!res.ok) {
+				throw new Error(`Failed to create server (${res.status})`);
+			}
 
 			form.reset();
 			router.refresh();
 			onClose();
 		} catch (error) {
-			console.log(error);
+			console.error("[CREATE_SERVER_MODAL]", error);
 		}
 	};
 
@@ -93,8 +86,13 @@ export const CreateServerModal = () => {
 									render={({ field }) => (
 										<FormItem>
 											<FormControl>
-												<FileUpload endpoint="serverImage" value={field.value} onChange={field.onChange} />
+												<FileUpload
+													endpoint="serverImage"
+													value={field.value}
+													onChange={(url) => field.onChange(url ?? "")}
+												/>
 											</FormControl>
+											<FormMessage />
 										</FormItem>
 									)}
 								/>
@@ -105,7 +103,7 @@ export const CreateServerModal = () => {
 								name="name"
 								render={({ field }) => (
 									<FormItem>
-										<FormLabel className="uppercase text-xs font-bold text-zinc-500 dark: text-secondary/70">
+										<FormLabel className="uppercase text-xs font-bold text-zinc-500">
 											server name
 										</FormLabel>
 										<FormControl>
