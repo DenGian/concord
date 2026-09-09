@@ -1,20 +1,18 @@
 "use client";
 
-import * as z from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { useEffect, useState } from "react";
-import axios from "axios";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useRouter } from "next/navigation";
 
+import { serverSchema, type ServerInput } from "@/lib/validations";
 import {
 	Dialog,
 	DialogContent,
 	DialogDescription,
-	DialogHeader,
 	DialogFooter,
+	DialogHeader,
 	DialogTitle,
 } from "@/components/ui/dialog";
-
 import {
 	Form,
 	FormControl,
@@ -23,35 +21,20 @@ import {
 	FormLabel,
 	FormMessage,
 } from "@/components/ui/form";
-
 import { Input } from "@/components/ui/input";
-
 import { Button } from "@/components/ui/button";
-
 import { FileUpload } from "@/components/file-upload";
 
-import { useRouter } from "next/navigation";
-
-const formSchema = z.object({
-	name: z.string().min(1, {
-		message: "Server name is required.",
-	}),
-	imageUrl: z.string().min(1, {
-		message: "Server image is required.",
-	}),
-});
-
+/**
+ * First-run modal: shown by the setup page when the user is not a member of
+ * any server yet. Cannot be dismissed — creating a server is the only way
+ * forward.
+ */
 export const InitialModal = () => {
-	const [isMounted, setIsMounted] = useState(false);
-
 	const router = useRouter();
 
-	useEffect(() => {
-		setIsMounted(true);
-	}, []);
-
-	const form = useForm({
-		resolver: zodResolver(formSchema),
+	const form = useForm<ServerInput>({
+		resolver: zodResolver(serverSchema),
 		defaultValues: {
 			name: "",
 			imageUrl: "",
@@ -60,25 +43,34 @@ export const InitialModal = () => {
 
 	const isLoading = form.formState.isSubmitting;
 
-	const onSubmit = async (values: z.infer<typeof formSchema>) => {
+	const onSubmit = async (values: ServerInput) => {
 		try {
-			await axios.post("/api/servers", values);
+			const res = await fetch("/api/servers", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify(values),
+			});
+			if (!res.ok) {
+				throw new Error(`Failed to create server (${res.status})`);
+			}
+			const server = await res.json();
 
 			form.reset();
+			router.push(`/servers/${server.id}`);
 			router.refresh();
-			window.location.reload();
 		} catch (error) {
-			console.log(error);
+			console.error("[INITIAL_MODAL]", error);
 		}
 	};
 
-	if (!isMounted) {
-		return null;
-	}
-
 	return (
-		<Dialog open={true}>
-			<DialogContent className="bg-white text-black p-0 overflow-hidden">
+		<Dialog open>
+			<DialogContent
+				className="bg-white text-black p-0 overflow-hidden"
+				showCloseButton={false}
+				onInteractOutside={(e) => e.preventDefault()}
+				onEscapeKeyDown={(e) => e.preventDefault()}
+			>
 				<DialogHeader className="pt-8 px-6">
 					<DialogTitle className="text-2xl text-center font-bold">Create your server!</DialogTitle>
 					<DialogDescription className="text-center text-zinc-500">
@@ -95,8 +87,13 @@ export const InitialModal = () => {
 									render={({ field }) => (
 										<FormItem>
 											<FormControl>
-												<FileUpload endpoint="serverImage" value={field.value} onChange={field.onChange} />
+												<FileUpload
+													endpoint="serverImage"
+													value={field.value}
+													onChange={(url) => field.onChange(url ?? "")}
+												/>
 											</FormControl>
+											<FormMessage />
 										</FormItem>
 									)}
 								/>
@@ -107,7 +104,7 @@ export const InitialModal = () => {
 								name="name"
 								render={({ field }) => (
 									<FormItem>
-										<FormLabel className="uppercase text-xs font-bold text-zinc-500 dark: text-secondary/70">
+										<FormLabel className="uppercase text-xs font-bold text-zinc-500">
 											server name
 										</FormLabel>
 										<FormControl>
