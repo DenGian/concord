@@ -1,11 +1,25 @@
 # Security Policy
 
+## Supported versions
+
+| Version | Supported |
+| --- | --- |
+| Latest commit on `main` | Yes |
+| Older commits and forks | No |
+
 ## Reporting a vulnerability
 
-Please do not open a public issue for a suspected vulnerability or include credentials, tokens, or personal data in an issue.
+Do not open a public issue for a suspected vulnerability or include credentials,
+tokens, exploit details, or personal data in an issue.
 
-Use GitHub's **Security** tab to submit a private vulnerability report. Include the affected route or component, reproduction steps, expected impact, and any suggested remediation. Reports will be acknowledged as soon as practical.
+Submit a [private vulnerability report](https://github.com/DenGian/full-stack_discord_clone/security/advisories/new)
+through GitHub. Include:
 
-## Supported version
+- the affected route, component, or dependency;
+- the prerequisites and minimal reproduction steps;
+- the expected security impact;
+- any known mitigations or suggested remediation.
 
-This portfolio project supports the latest commit on the `main` branch. Older snapshots are not maintained.
+Reports will be reviewed as availability permits. Please allow time to
+investigate and coordinate a fix before public disclosure. If the report
+contains a live credential, revoke or rotate it before submitting the report.
