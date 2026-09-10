@@ -10,10 +10,9 @@
  *   channel:<channelId>           — events for a server text channel
  *   conversation:<conversationId> — events for a 1:1 conversation
  *
- * Note: the hub lives in process memory, which is perfect for a single
- * Node.js server (and for `next dev`). If you scale to multiple instances,
- * replace this module with a shared broker (e.g. Redis pub/sub) — the
- * publish/subscribe API can stay identical.
+ * The hub lives in process memory and therefore serves one Node.js process.
+ * Multi-instance deployments require a shared broker behind the same
+ * publish/subscribe interface.
  */
 
 export type RealtimeEvent = {
