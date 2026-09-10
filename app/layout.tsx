@@ -20,7 +20,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 	return (
 		<html lang="en" suppressHydrationWarning>
 			<body className="bg-white font-sans dark:bg-[#313338]">
-				{/* ClerkProvider sits inside <body> as required since Clerk v7. */}
 				<ClerkProvider afterSignOutUrl="/">
 					<ThemeProvider
 						attribute="class"
