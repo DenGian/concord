@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 import { currentProfile } from "@/lib/current-profile";
 import { db } from "@/lib/db";
-import { MemberRole } from "@/lib/generated/prisma/browser";
+import { communityManagerRoles } from "@/lib/permissions";
 import { channelSchema } from "@/lib/validations";
 
 /**
@@ -33,7 +33,7 @@ export async function POST(req: Request) {
 				members: {
 					some: {
 						profileId: profile.id,
-						role: { in: [MemberRole.ADMIN, MemberRole.MODERATOR] },
+						role: { in: communityManagerRoles },
 					},
 				},
 			},
