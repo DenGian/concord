@@ -47,8 +47,8 @@ const ChannelIdPage = async ({
 						chatId={channel.id}
 						type="channel"
 						apiUrl="/api/messages"
-						socketUrl="/api/messages"
-						socketQuery={{ channelId: channel.id, serverId: channel.serverId }}
+						mutationUrl="/api/messages"
+						mutationQuery={{ channelId: channel.id, serverId: channel.serverId }}
 						paramKey="channelId"
 						paramValue={channel.id}
 					/>
