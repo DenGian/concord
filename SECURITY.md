@@ -12,7 +12,7 @@
 Do not open a public issue for a suspected vulnerability or include credentials,
 tokens, exploit details, or personal data in an issue.
 
-Submit a [private vulnerability report](https://github.com/DenGian/full-stack_discord_clone/security/advisories/new)
+Submit a [private vulnerability report](https://github.com/DenGian/concord/security/advisories/new)
 through GitHub. Include:
 
 - the affected route, component, or dependency;
