@@ -1,6 +1,6 @@
 # Contributing
 
-Thank you for considering a contribution to Discord Clone. Bug reports,
+Thank you for considering a contribution to Concord. Bug reports,
 documentation improvements, tests, and focused code changes are welcome.
 
 ## Before you start
