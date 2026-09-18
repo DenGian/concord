@@ -12,6 +12,7 @@ import {
 	type Member,
 } from "@/lib/generated/prisma/browser";
 import { cn } from "@/lib/utils";
+import { canDeleteChannelMessage } from "@/lib/permissions";
 import type { PublicProfile } from "@/lib/types";
 import { messageSchema, type MessageInput } from "@/lib/validations";
 import { useModal } from "@/hooks/use-modal-store";
@@ -33,8 +34,8 @@ interface ChatItemProps {
 	currentMember: Member;
 	isUpdated: boolean;
 	/** Endpoint for editing/deleting this message. */
-	socketUrl: string;
-	socketQuery: Record<string, string>;
+	mutationUrl: string;
+	mutationQuery: Record<string, string>;
 }
 
 const roleIconMap = {
@@ -57,8 +58,8 @@ export const ChatItem = ({
 	deleted,
 	currentMember,
 	isUpdated,
-	socketUrl,
-	socketQuery,
+	mutationUrl,
+	mutationQuery,
 }: ChatItemProps) => {
 	const [isEditing, setIsEditing] = useState(false);
 	const { onOpen } = useModal();
@@ -95,8 +96,8 @@ export const ChatItem = ({
 
 	const onSubmit = async (values: MessageInput) => {
 		try {
-			const queryString = new URLSearchParams(socketQuery).toString();
-			const res = await fetch(`${socketUrl}/${id}?${queryString}`, {
+			const queryString = new URLSearchParams(mutationQuery).toString();
+			const res = await fetch(`${mutationUrl}/${id}?${queryString}`, {
 				method: "PATCH",
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify(values),
@@ -112,10 +113,10 @@ export const ChatItem = ({
 		}
 	};
 
-	const isAdmin = currentMember.role === MemberRole.ADMIN;
-	const isModerator = currentMember.role === MemberRole.MODERATOR;
 	const isOwner = currentMember.id === member.id;
-	const canDeleteMessage = !deleted && (isAdmin || isModerator || isOwner);
+	const canDeleteMessage =
+		!deleted &&
+		canDeleteChannelMessage(currentMember.role, currentMember.id, member.id);
 	const canEditMessage = !deleted && isOwner && !fileUrl;
 	const isPdf = fileType === "application/pdf";
 	const isImage = !!fileUrl && !isPdf;
@@ -234,8 +235,8 @@ export const ChatItem = ({
 						<Trash
 							onClick={() =>
 								onOpen("deleteMessage", {
-									apiUrl: `${socketUrl}/${id}`,
-									query: socketQuery,
+									apiUrl: `${mutationUrl}/${id}`,
+									query: mutationQuery,
 								})
 							}
 							className="cursor-pointer ml-auto w-4 h-4 text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 transition"
