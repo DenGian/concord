@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 
 import { MemberRole } from "@/lib/generated/prisma/browser";
+import { canManageCommunity } from "@/lib/permissions";
 import type { ServerWithMembersWithProfiles } from "@/lib/types";
 import { useModal } from "@/hooks/use-modal-store";
 import {
@@ -35,7 +36,7 @@ export const ServerHeader = ({ server, role }: ServerHeaderProps) => {
 	const { onOpen } = useModal();
 
 	const isAdmin = role === MemberRole.ADMIN;
-	const isModerator = isAdmin || role === MemberRole.MODERATOR;
+	const canManage = canManageCommunity(role);
 
 	return (
 		<DropdownMenu>
@@ -46,7 +47,7 @@ export const ServerHeader = ({ server, role }: ServerHeaderProps) => {
 				</button>
 			</DropdownMenuTrigger>
 			<DropdownMenuContent className="w-56 text-xs font-medium text-black dark:text-neutral-400 space-y-[2px]">
-				{isModerator && (
+				{canManage && (
 					<DropdownMenuItem
 						onClick={() => onOpen("invite", { server })}
 						className="text-indigo-600 dark:text-indigo-400 px-3 py-2 text-sm cursor-pointer"
@@ -73,7 +74,7 @@ export const ServerHeader = ({ server, role }: ServerHeaderProps) => {
 						<Users className="h-4 w-4 ml-auto" />
 					</DropdownMenuItem>
 				)}
-				{isModerator && (
+				{canManage && (
 					<DropdownMenuItem
 						onClick={() => onOpen("createChannel", { server })}
 						className="px-3 py-2 text-sm cursor-pointer"
@@ -82,7 +83,7 @@ export const ServerHeader = ({ server, role }: ServerHeaderProps) => {
 						<PlusCircle className="h-4 w-4 ml-auto" />
 					</DropdownMenuItem>
 				)}
-				{isModerator && <DropdownMenuSeparator />}
+				{canManage && <DropdownMenuSeparator />}
 				{isAdmin && (
 					<DropdownMenuItem
 						onClick={() => onOpen("deleteServer", { server })}
