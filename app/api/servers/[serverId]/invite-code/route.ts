@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 import { currentProfile } from "@/lib/current-profile";
 import { db } from "@/lib/db";
-import { MemberRole } from "@/lib/generated/prisma/browser";
+import { communityManagerRoles } from "@/lib/permissions";
 
 type Params = { params: Promise<{ serverId: string }> };
 
@@ -25,7 +25,7 @@ export async function PATCH(_req: Request, { params }: Params) {
 				members: {
 					some: {
 						profileId: profile.id,
-						role: { in: [MemberRole.ADMIN, MemberRole.MODERATOR] },
+						role: { in: communityManagerRoles },
 					},
 				},
 			},
