@@ -1,4 +1,4 @@
-// Prisma schema for the Discord clone.
+// Prisma schema for Concord.
 //
 // The database is PostgreSQL (see docker-compose.yml for a ready-to-use local
 // instance). The generated client is written to `lib/generated/prisma` and is
@@ -35,13 +35,13 @@ model Profile {
   updatedAt DateTime @updatedAt
 }
 
-/// A Server (a.k.a. "guild" in Discord terms) groups channels and members.
+/// A Server groups channels and members.
 model Server {
   id         String @id @default(uuid())
   name       String
   imageUrl   String @db.Text
-  /// Single-use-style invite token embedded in invite links
-  /// (`/invite/[inviteCode]`). Regenerated on demand by admins.
+  /// Revocable invite token embedded in invite links (`/invite/[inviteCode]`).
+  /// It remains valid until an admin or moderator rotates it.
   inviteCode String @unique
 
   /// The profile that created (and administers) the server.
