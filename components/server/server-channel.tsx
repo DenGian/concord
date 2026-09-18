@@ -5,11 +5,12 @@ import { Edit, Hash, Lock, Mic, Trash, Video } from "lucide-react";
 
 import {
 	ChannelType,
-	MemberRole,
 	type Channel,
+	type MemberRole,
 	type Server,
 } from "@/lib/generated/prisma/browser";
 import { cn } from "@/lib/utils";
+import { canManageCommunity } from "@/lib/permissions";
 import { useModal, type ModalType } from "@/hooks/use-modal-store";
 import { ActionTooltip } from "@/components/action-tooltip";
 
@@ -64,7 +65,7 @@ export const ServerChannel = ({ channel, server, role }: ServerChannelProps) => 
 			>
 				{channel.name}
 			</p>
-			{channel.name !== "general" && role !== MemberRole.GUEST && (
+			{channel.name !== "general" && canManageCommunity(role) && (
 				<div className="ml-auto flex items-center gap-x-2">
 					<ActionTooltip label="Edit">
 						<Edit
