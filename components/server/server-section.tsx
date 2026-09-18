@@ -4,6 +4,7 @@ import { Plus, Settings } from "lucide-react";
 
 import { ChannelType, MemberRole } from "@/lib/generated/prisma/browser";
 import type { ServerWithMembersWithProfiles } from "@/lib/types";
+import { canManageCommunity } from "@/lib/permissions";
 import { useModal } from "@/hooks/use-modal-store";
 import { ActionTooltip } from "@/components/action-tooltip";
 
@@ -34,7 +35,7 @@ export const ServerSection = ({
 			<p className="text-xs uppercase font-semibold text-zinc-500 dark:text-zinc-400">
 				{label}
 			</p>
-			{role !== MemberRole.GUEST && sectionType === "channels" && (
+			{canManageCommunity(role) && sectionType === "channels" && (
 				<ActionTooltip label="Create channel" side="top">
 					<button
 						onClick={() => onOpen("createChannel", { channelType })}
