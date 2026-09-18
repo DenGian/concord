@@ -22,8 +22,8 @@ interface ChatMessagesProps {
 	/** History endpoint (GET). */
 	apiUrl: string;
 	/** Mutation endpoint base (POST/PATCH/DELETE). */
-	socketUrl: string;
-	socketQuery: Record<string, string>;
+	mutationUrl: string;
+	mutationQuery: Record<string, string>;
 	paramKey: "channelId" | "conversationId";
 	paramValue: string;
 	type: "channel" | "conversation";
@@ -40,8 +40,8 @@ export const ChatMessages = ({
 	member,
 	chatId,
 	apiUrl,
-	socketUrl,
-	socketQuery,
+	mutationUrl,
+	mutationQuery,
 	paramKey,
 	paramValue,
 	type,
@@ -131,8 +131,8 @@ export const ChatMessages = ({
 								deleted={message.deleted}
 								timestamp={format(new Date(message.createdAt), DATE_FORMAT)}
 								isUpdated={message.updatedAt !== message.createdAt}
-								socketUrl={socketUrl}
-								socketQuery={socketQuery}
+								mutationUrl={mutationUrl}
+								mutationQuery={mutationQuery}
 							/>
 						))}
 					</Fragment>
