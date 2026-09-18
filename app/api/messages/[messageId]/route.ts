@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 
 import { currentProfile } from "@/lib/current-profile";
 import { db } from "@/lib/db";
-import { ChannelType, MemberRole } from "@/lib/generated/prisma/browser";
+import { ChannelType } from "@/lib/generated/prisma/browser";
+import { canDeleteChannelMessage } from "@/lib/permissions";
 import { channelKey, realtimeHub } from "@/lib/realtime";
 import { publicProfileSelect } from "@/lib/types";
 import { messageSchema } from "@/lib/validations";
@@ -110,12 +111,13 @@ export async function DELETE(req: Request, { params }: Params) {
 			return new NextResponse("Message not found", { status: 404 });
 		}
 
-		const isOwner = loaded.message.memberId === loaded.member.id;
-		const canModerate =
-			loaded.member.role === MemberRole.ADMIN ||
-			loaded.member.role === MemberRole.MODERATOR;
-
-		if (!isOwner && !canModerate) {
+		if (
+			!canDeleteChannelMessage(
+				loaded.member.role,
+				loaded.member.id,
+				loaded.message.memberId,
+			)
+		) {
 			return new NextResponse("Forbidden", { status: 403 });
 		}
 
