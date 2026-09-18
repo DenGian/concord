@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
-      DATABASE_URL: postgresql://discord:discord@localhost:5432/discord
+      DATABASE_URL: postgresql://concord:concord@localhost:5432/concord
 
     steps:
       - name: Check out repository
