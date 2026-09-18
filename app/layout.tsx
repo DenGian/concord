@@ -9,11 +9,11 @@ import "./globals.css";
 
 export const metadata: Metadata = {
 	title: {
-		default: "Discord Clone",
-		template: "%s | Discord Clone",
+		default: "Concord",
+		template: "%s | Concord",
 	},
 	description:
-		"A full-stack Discord clone: servers, channels, realtime chat, direct messages and audio/video rooms. Built with Next.js, Prisma, Clerk, UploadThing and LiveKit.",
+		"A real-time community platform with role-based servers, messaging, file sharing and optional audio/video rooms.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -25,7 +25,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 						attribute="class"
 						defaultTheme="dark"
 						enableSystem={false}
-						storageKey="discord-theme"
+						storageKey="concord-theme"
 					>
 						<QueryProvider>
 							<ModalProvider />
