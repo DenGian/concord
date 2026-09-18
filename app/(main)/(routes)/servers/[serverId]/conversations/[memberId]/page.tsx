@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { currentProfile } from "@/lib/current-profile";
 import { db } from "@/lib/db";
 import { getOrCreateConversation } from "@/lib/conversation";
+import { publicProfileSelect } from "@/lib/types";
 import { ChatHeader } from "@/components/chat/chat-header";
 import { ChatInput } from "@/components/chat/chat-input";
 import { ChatMessages } from "@/components/chat/chat-messages";
@@ -29,7 +30,6 @@ const MemberIdPage = async ({
 
 	const currentMember = await db.member.findFirst({
 		where: { serverId, profileId: profile.id },
-		include: { profile: true },
 	});
 
 	if (!currentMember) {
@@ -43,7 +43,7 @@ const MemberIdPage = async ({
 			id: { equals: memberId, not: currentMember.id },
 			serverId,
 		},
-		include: { profile: true },
+		include: { profile: { select: publicProfileSelect } },
 	});
 
 	if (!otherMember) {
@@ -78,8 +78,8 @@ const MemberIdPage = async ({
 						chatId={conversation.id}
 						type="conversation"
 						apiUrl="/api/direct-messages"
-						socketUrl="/api/direct-messages"
-						socketQuery={{ conversationId: conversation.id }}
+						mutationUrl="/api/direct-messages"
+						mutationQuery={{ conversationId: conversation.id }}
 						paramKey="conversationId"
 						paramValue={conversation.id}
 					/>
